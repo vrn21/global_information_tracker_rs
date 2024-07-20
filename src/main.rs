@@ -6,7 +6,7 @@ use std::fs;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[command[Subcommand]]
+    #[command[subcommand]]
     command: Command,
 }
 #[derive(Debug, Subcommand)]
@@ -22,7 +22,7 @@ fn main() {
             fs::create_dir(".git").unwrap();
             fs::create_dir(".git/objects").unwrap();
             fs::create_dir(".git/refs").unwrap();
-            fs::write(".git/HEAD", "ref: refs/heads/main\n").unwrap();
+            fs::write(".git/HEAD", "ref: refs/heads/master\n").unwrap();
             println!("Initialized git directory");
         }
     }
