@@ -4,9 +4,9 @@ use clap::{Parser, Subcommand};
 use flate2::read::ZlibDecoder;
 use std::ffi::CStr;
 use std::fs;
-use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::io::{self, Error};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -72,20 +72,19 @@ fn main() -> anyhow::Result<()> {
                 _ => bail!("we do not yet know how to print a {kind}"),
             };
 
-            let size = size.parse::<usize>().context("not a valid blob size ")?;
-            buf.clear();
-            buf.resize(size, 0);
-            z.read_exact(&mut buf[..])
-                .context("read true contents of .git/objects file")?;
-            let n = z
-                .read(&mut buf)
-                .context("validate eof in ./git/objects file")?;
-            anyhow::ensure!(n == 0, "git object had {n} trailing bytes");
-            let mut std = std::io::stdout();
-            std.lock();
-
+            let size = size.parse::<u64>().context("not a valid blob size ")?;
+            let mut z = z.take(size);
             match kind {
-                Kind::Blob => std.write_all(&buf).context("writing objects to stdout")?,
+                Kind::Blob => {
+                    let mut std = std::io::stdout();
+                    let mut stdout = std.lock();
+                    let n = std::io::copy(&mut z, &mut stdout)
+                        .context("writing .git/objects to stdout")?;
+                    anyhow::ensure!(
+                        n == size,
+                        "git object didnt have expected size (expected:{size}, found: {n}"
+                    );
+                }
             }
         }
     }
