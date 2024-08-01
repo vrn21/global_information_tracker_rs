@@ -4,6 +4,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 mod commands;
+mod objects;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -22,9 +23,14 @@ enum Command {
         object_hash: String,
     },
     HashObject {
-        #[clap(short = '2')]
+        #[clap(short = 'w')]
         write: bool,
         file: PathBuf,
+    },
+    LsTree {
+        #[clap(long)]
+        name_only: bool,
+        tree_hash: String,
     },
 }
 
@@ -32,16 +38,22 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     match args.command {
         Command::Init => {
-            commands::init::invoke();
+            commands::init::invoke()?;
         }
         Command::CatFile {
             pretty_print,
             object_hash,
         } => {
-            commands::cat_file::invoke(pretty_print, &object_hash);
+            commands::cat_file::invoke(pretty_print, &object_hash)?;
         }
         Command::HashObject { write, file } => {
-            commands::hash_object::invoke(write, file);
+            commands::hash_object::invoke(write, file)?;
+        }
+        Command::LsTree {
+            name_only,
+            tree_hash,
+        } => {
+            commands::lstree::invoke(name_only, &tree_hash)?;
         }
     }
 
